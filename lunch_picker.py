@@ -21,6 +21,74 @@ plt.rc('font', family=font_families)
 plt.rcParams['axes.unicode_minus'] = False
 # ---------------------------------
 
+# Localization texts
+TEXTS = {
+    'ko': {
+        'title': '점심 선택',
+        'subtitle': '오늘의 점심을 추천해드립니다',
+        'tab_menu': '점심 관리',
+        'tab_history': '선택 기록',
+        'tab_stats': '통계',
+        'tab_settings': '설정',
+        'add_label': '점심 추가',
+        'entry_placeholder': '새 점심 이름을 입력하세요',
+        'add_button': '추가',
+        'menu_list': '점심 목록',
+        'menu_list_subtitle': '(선택항목은 선택 대상에서 제외)',
+        'selection_title': '점심 선택',
+        'duration_label': '카운트다운 시간(초):',
+        'start_button': '메뉴 추천 시작!',
+        'restart_button': '추첨 재시작',
+        'idle_label': '오늘 점심은 무엇을 먹을까요?',
+        'result_title': '오늘의 선택은',
+        'history_title': '최근 선택 기록',
+        'history_empty': '선택 기록이 없습니다.',
+        'delete_history': '삭제',
+        'recent_selection': '최근 선택: {name} (자동 제외)',
+        'stats_title': '점심별 누적 선택 횟수',
+        'stats_xlabel': '선택 횟수',
+        'stats_error': '선택 기록이 없습니다.',
+        'settings_title': '이름/사명',
+        'settings_placeholder': '이름/사명을 입력하세요',
+        'save_button': '저장',
+        'save_success': '이름/사명이 저장되었습니다.',
+        'settings_warning_title': '입력 오류',
+        'settings_warning_msg': '이름/사명을 입력해주세요.'
+    },
+    'en': {
+        'title': 'Lunch Picker',
+        'subtitle': 'Recommend today’s lunch',
+        'tab_menu': 'Manage Lunches',
+        'tab_history': 'Selection History',
+        'tab_stats': 'Statistics',
+        'tab_settings': 'Settings',
+        'add_label': 'Add Lunch',
+        'entry_placeholder': 'Enter lunch name',
+        'add_button': 'Add',
+        'menu_list': 'Lunch List',
+        'menu_list_subtitle': '(Selected items will be excluded)',
+        'selection_title': 'Lunch Selection',
+        'duration_label': 'Countdown Time (sec):',
+        'start_button': 'Start Recommendation!',
+        'restart_button': 'Restart Selection',
+        'idle_label': 'What shall we eat for lunch today?',
+        'result_title': 'Today’s Selection',
+        'history_title': 'Recent Selections',
+        'history_empty': 'No selection records.',
+        'delete_history': 'Delete',
+        'recent_selection': 'Recent Selection: {name} (Auto excluded)',
+        'stats_title': 'Cumulative Selection Count by Lunch',
+        'stats_xlabel': 'Selection Count',
+        'stats_error': 'No selection records.',
+        'settings_title': 'Name/Company',
+        'settings_placeholder': 'Enter name/company',
+        'save_button': 'Save',
+        'save_success': 'Name/Company saved.',
+        'settings_warning_title': 'Input Error',
+        'settings_warning_msg': 'Please enter name/company.'
+    }
+}
+
 # Premium color scheme
 COLOR_PRIMARY = "#4A90E2"
 COLOR_SECONDARY = "#34495E"
@@ -39,6 +107,8 @@ customtkinter.set_default_color_theme("blue")
 class LunchPickerApp(customtkinter.CTk):
     def __init__(self):
         super().__init__()
+        # Default language
+        self.lang = 'ko'
 
         # Initialize database
         self.db = MenuDB()
@@ -46,13 +116,13 @@ class LunchPickerApp(customtkinter.CTk):
         self.last_selected_name: str | None = None
 
         # Configure window
-        self.title("점심 식당 선택")
+        self.title(TEXTS[self.lang]['title'])
         self.geometry("900x700")
         self.minsize(800, 600)
         self.configure(fg_color=COLOR_BG)
 
         # Get today's date
-        today = datetime.datetime.now().strftime("%Y년 %m월 %d일")
+        self.today = datetime.datetime.now().strftime("%Y년 %m월 %d일")
 
         # Create header
         self.header_frame = customtkinter.CTkFrame(self, fg_color="transparent")
@@ -61,7 +131,7 @@ class LunchPickerApp(customtkinter.CTk):
         # Create title label with date
         self.title_label = customtkinter.CTkLabel(
             self,
-            text=f"점심 식당 선택 ({today})",
+            text=f"{TEXTS[self.lang]['title']} ({self.today})",
             font=customtkinter.CTkFont(size=28, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
@@ -70,11 +140,15 @@ class LunchPickerApp(customtkinter.CTk):
         # Create subtitle label
         self.subtitle_label = customtkinter.CTkLabel(
             self.header_frame,
-            text="오늘의 점심 식당을 추천해드립니다",
+            text=TEXTS[self.lang]['subtitle'],
             font=customtkinter.CTkFont(size=16, family="Malgun Gothic"),
             text_color="#7F8C8D"
         )
         self.subtitle_label.pack()
+        # Language toggle
+        self.lang_var = tk.StringVar(value='한글')
+        self.lang_toggle = customtkinter.CTkSegmentedButton(self.header_frame, values=['한글','ENG'], variable=self.lang_var, command=self._on_language_change)
+        self.lang_toggle.pack(side='right', padx=(0,20))
 
         # Create main content frame
         self.content_frame = customtkinter.CTkFrame(self, fg_color="transparent")
@@ -96,10 +170,10 @@ class LunchPickerApp(customtkinter.CTk):
         self.tab_view.pack(fill="both", expand=True, padx=20, pady=10)
 
         # Create tabs with padding
-        self.menu_tab = self.tab_view.add("  식당 관리  ")
-        self.history_tab = self.tab_view.add("  선택 기록  ")
-        self.stats_tab = self.tab_view.add("  통계  ")
-        self.settings_tab = self.tab_view.add("  설정  ")
+        self.menu_tab = self.tab_view.add(f"  {TEXTS[self.lang]['tab_menu']}  ")
+        self.history_tab = self.tab_view.add(f"  {TEXTS[self.lang]['tab_history']}  ")
+        self.stats_tab = self.tab_view.add(f"  {TEXTS[self.lang]['tab_stats']}  ")
+        self.settings_tab = self.tab_view.add(f"  {TEXTS[self.lang]['tab_settings']}  ")
 
         # --- Initialization Order --- 
         # 1. Setup all UI tabs to create the widgets
@@ -117,6 +191,8 @@ class LunchPickerApp(customtkinter.CTk):
         
         # 3. Set the final initial UI state
         self._update_ui_for_state('idle')
+        # Refresh UI texts based on language
+        self._refresh_ui_texts()
 
     def _on_tab_change(self, tab_name=None):
         # This method is called when the tab is changed.
@@ -127,9 +203,11 @@ class LunchPickerApp(customtkinter.CTk):
             self.stats_animation.event_source.stop()
             self.stats_animation = None
 
-        if current_tab == "  통계  ":
+        # Localized tab change handling
+        label = current_tab.strip()
+        if label == TEXTS[self.lang]['tab_stats']:
             self.update_stats_graph()
-        elif current_tab == "  선택 기록  ":
+        elif label == TEXTS[self.lang]['tab_history']:
             self.load_history()
             
     def _setup_menu_tab(self):
@@ -144,13 +222,13 @@ class LunchPickerApp(customtkinter.CTk):
         left_panel.configure(width=400)
         
         # Input section title
-        input_title = customtkinter.CTkLabel(
+        self.input_title = customtkinter.CTkLabel(
             left_panel,
             text="식당 추가",
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
-        input_title.pack(pady=(20, 10), padx=20, anchor="w")
+        self.input_title.pack(pady=(20, 10), padx=20, anchor="w")
         
         # Input field
         input_frame = customtkinter.CTkFrame(left_panel, fg_color="transparent")
@@ -181,21 +259,21 @@ class LunchPickerApp(customtkinter.CTk):
         customtkinter.CTkFrame(left_panel, height=2, fg_color="#EEEEEE").pack(pady=20, padx=20, fill="x")
         
         # Exclusion section title
-        exclusion_title = customtkinter.CTkLabel(
+        self.exclusion_title = customtkinter.CTkLabel(
             left_panel,
             text="식당 목록",
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
-        exclusion_title.pack(pady=(0, 5), padx=20, anchor="w")
+        self.exclusion_title.pack(pady=(0, 5), padx=20, anchor="w")
 
-        exclusion_subtitle = customtkinter.CTkLabel(
+        self.exclusion_subtitle = customtkinter.CTkLabel(
             left_panel,
             text="(선택항목은 선택 대상에서 제외)",
             font=customtkinter.CTkFont(size=12, family="Malgun Gothic"),
             text_color="#7F8C8D"
         )
-        exclusion_subtitle.pack(pady=(0, 10), padx=20, anchor="w")
+        self.exclusion_subtitle.pack(pady=(0, 10), padx=20, anchor="w")
 
         self.auto_exclude_label = customtkinter.CTkLabel(
             left_panel,
@@ -222,24 +300,24 @@ class LunchPickerApp(customtkinter.CTk):
         right_panel.pack(side="right", fill="both", expand=True, padx=(10, 0), pady=10)
         
         # Selection title
-        selection_title = customtkinter.CTkLabel(
+        self.selection_title = customtkinter.CTkLabel(
             right_panel,
             text="점심 선택",
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
-        selection_title.pack(pady=(20, 10), padx=20, anchor="w")
+        self.selection_title.pack(pady=(20, 10), padx=20, anchor="w")
 
         # Countdown duration selector
         duration_frame = customtkinter.CTkFrame(right_panel, fg_color="transparent")
         duration_frame.pack(pady=10, padx=20, fill="x")
 
-        duration_label = customtkinter.CTkLabel(
+        self.duration_label = customtkinter.CTkLabel(
             duration_frame, 
             text="카운트다운 시간(초):", 
             font=customtkinter.CTkFont(size=14, family="Malgun Gothic")
         )
-        duration_label.pack(side="left")
+        self.duration_label.pack(side="left")
 
         self.countdown_duration_var = customtkinter.StringVar(value="5")
         self.duration_menu = customtkinter.CTkOptionMenu(
@@ -337,7 +415,7 @@ class LunchPickerApp(customtkinter.CTk):
         if not stats:
             # Reset axes to full canvas for proper centering when empty
             self.stats_ax.set_position([0, 0, 1, 1])
-            self.stats_ax.text(0.5, 0.5, "선택 기록이 없습니다.", ha='center', va='center', fontsize=18, color=COLOR_SECONDARY, transform=self.stats_ax.transAxes)
+            self.stats_ax.text(0.5, 0.5, TEXTS[self.lang]['stats_error'], ha='center', va='center', fontsize=18, color=COLOR_SECONDARY, transform=self.stats_ax.transAxes)
             self.stats_ax.set_xticks([]); self.stats_ax.set_yticks([])
             self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
             self.stats_ax.spines['left'].set_visible(False); self.stats_ax.spines['bottom'].set_visible(False)
@@ -361,11 +439,27 @@ class LunchPickerApp(customtkinter.CTk):
             elif rank == 2:
                 color, emoji = COLOR_PRIMARY, "🥈 "
             colors.append(color)
-            ranked_names.append(f"{emoji}{rank}위. {name}")
+            # Localize rank suffix
+            if self.lang == 'ko':
+                label_rank = f'{rank}위'
+            else:
+                # English ordinal suffix logic
+                if rank % 100 in (11, 12, 13):
+                    suffix = 'th'
+                elif rank % 10 == 1:
+                    suffix = 'st'
+                elif rank % 10 == 2:
+                    suffix = 'nd'
+                elif rank % 10 == 3:
+                    suffix = 'rd'
+                else:
+                    suffix = 'th'
+                label_rank = f'{rank}{suffix}'
+            ranked_names.append(f'{emoji}{label_rank}. {name}')
 
         # 그래프 기본 틀과 스타일 설정
-        self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
-        self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
+        self.stats_ax.set_title(TEXTS[self.lang]['stats_title'], fontsize=16, weight='bold', color=COLOR_SECONDARY)
+        self.stats_ax.set_xlabel(TEXTS[self.lang]['stats_xlabel'], fontsize=12, color=COLOR_SECONDARY)
         self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
         self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
@@ -429,13 +523,13 @@ class LunchPickerApp(customtkinter.CTk):
         settings_card = customtkinter.CTkFrame(settings_frame, fg_color=COLOR_CARD, corner_radius=12)
         settings_card.pack(fill="x", pady=10)
 
-        title = customtkinter.CTkLabel(
+        self.settings_title = customtkinter.CTkLabel(
             settings_card,
             text="회사명 설정",
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
-        title.pack(pady=(20, 10), padx=20, anchor="w")
+        self.settings_title.pack(pady=(20, 10), padx=20, anchor="w")
 
         input_frame = customtkinter.CTkFrame(settings_card, fg_color="transparent")
         input_frame.pack(pady=10, padx=20, fill="x")
@@ -449,7 +543,7 @@ class LunchPickerApp(customtkinter.CTk):
         )
         self.company_name_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
-        save_button = customtkinter.CTkButton(
+        self.save_button = customtkinter.CTkButton(
             input_frame,
             text="저장",
             command=self._save_company_name,
@@ -459,7 +553,7 @@ class LunchPickerApp(customtkinter.CTk):
             height=45,
             font=customtkinter.CTkFont(size=14, weight="bold", family="Malgun Gothic")
         )
-        save_button.pack(side="right")
+        self.save_button.pack(side="right")
 
         self.save_status_label = customtkinter.CTkLabel(
             settings_card,
@@ -485,11 +579,11 @@ class LunchPickerApp(customtkinter.CTk):
             today = datetime.datetime.now().strftime("%Y년 %m월 %d일")
             self.title(f"{company_name} 점심 식당 선택")
             self.title_label.configure(text=f"{company_name} 점심 식당 선택 ({today})")
-            self.save_status_label.configure(text="회사명이 저장되었습니다.")
+            self.save_status_label.configure(text=TEXTS[self.lang]['save_success'])
             self.after(3000, lambda: self.save_status_label.configure(text=""))
         else:
             from tkinter import messagebox
-            messagebox.showwarning("입력 오류", "회사명을 입력해주세요.")
+            messagebox.showwarning(TEXTS[self.lang]['settings_warning_title'], TEXTS[self.lang]['settings_warning_msg'])
 
     def _setup_history_tab(self):
         # History frame
@@ -501,13 +595,13 @@ class LunchPickerApp(customtkinter.CTk):
         history_card.pack(fill="both", expand=True)
         
         # Title
-        history_title = customtkinter.CTkLabel(
+        self.history_title = customtkinter.CTkLabel(
             history_card, 
             text="최근 선택 기록",
             font=customtkinter.CTkFont(size=22, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
-        history_title.pack(pady=(30, 20), padx=20, anchor="w")
+        self.history_title.pack(pady=(30, 20), padx=20, anchor="w")
         
         # History list
         self.history_list = customtkinter.CTkScrollableFrame(
@@ -539,11 +633,11 @@ class LunchPickerApp(customtkinter.CTk):
         for item_id, name, is_excluded in items:
             item_frame = customtkinter.CTkFrame(self.exclusion_list_frame, fg_color="transparent", height=50)
             item_frame.pack(fill="x", padx=5, pady=6)
-            
+
             var = customtkinter.BooleanVar(value=is_excluded)
             checkbox = customtkinter.CTkCheckBox(
-                item_frame, 
-                text="", 
+                item_frame,
+                text="",
                 variable=var,
                 command=lambda id=item_id, v=var: self._toggle_exclusion(id, v),
                 font=customtkinter.CTkFont(size=16, family="Malgun Gothic"),
@@ -553,6 +647,7 @@ class LunchPickerApp(customtkinter.CTk):
                 border_width=2
             )
             checkbox.pack(side="left", padx=(10, 15))
+
             
             # Add menu name as a separate label for better spacing
             menu_label = customtkinter.CTkLabel(
@@ -578,7 +673,7 @@ class LunchPickerApp(customtkinter.CTk):
         self.last_selected_name = name_to_display
 
         if name_to_display:
-            self.auto_exclude_label.configure(text=f"최근 선택: {name_to_display} (자동 제외)")
+            self.auto_exclude_label.configure(text=TEXTS[self.lang]['recent_selection'].format(name=name_to_display))
             # Show label above list
             self.auto_exclude_label.pack(pady=(0, 5), padx=20, fill="x")
             # Re-pack the list frame to ensure it stays below the label
@@ -611,7 +706,7 @@ class LunchPickerApp(customtkinter.CTk):
         if not history:
             no_history_label = customtkinter.CTkLabel(
                 self.history_list,
-                text="선택 기록이 없습니다.",
+                text=TEXTS[self.lang]['history_empty'],
                 font=customtkinter.CTkFont(size=14, family="Malgun Gothic"),
                 text_color="#95a5a6"
             )
@@ -632,7 +727,7 @@ class LunchPickerApp(customtkinter.CTk):
 
             delete_button = customtkinter.CTkButton(
                 frame,
-                text="삭제",
+                text=TEXTS[self.lang]['delete_history'],
                 width=60,
                 height=30,
                 fg_color="#E74C3C",
@@ -815,7 +910,174 @@ class LunchPickerApp(customtkinter.CTk):
         self.destroy()
 
 
+    def _on_language_change(self, choice):
+        # Change language and update UI
+        self.lang = 'ko' if choice == '한글' else 'en'
+        # Rebuild tabs and content for new language
+        self._rebuild_tabview()
+        # Refresh all UI texts including header and content
+        self._refresh_ui_texts()
+
+    def _refresh_ui_texts(self):
+        # Update header texts
+        self.title_label.configure(text=f"{TEXTS[self.lang]['title']} ({self.today})")
+        self.subtitle_label.configure(text=TEXTS[self.lang]['subtitle'])
+        # Update tab labels
+        btns = list(self.tab_view._segmented_button._buttons.values())
+        keys = ['tab_menu','tab_history','tab_stats','tab_settings']
+        for btn, key in zip(btns, keys):
+            btn.configure(text=TEXTS[self.lang][key])
+        # Update input section
+        self.input_title.configure(text=TEXTS[self.lang]['add_label'])
+        self.entry.configure(placeholder_text=TEXTS[self.lang]['entry_placeholder'])
+        self.add_button.configure(text=TEXTS[self.lang]['add_button'])
+        # Menu list section
+        self.exclusion_title.configure(text=TEXTS[self.lang]['menu_list'])
+        self.exclusion_subtitle.configure(text=TEXTS[self.lang]['menu_list_subtitle'])
+        # Selection section
+        self.selection_title.configure(text=TEXTS[self.lang]['selection_title'])
+        self.duration_label.configure(text=TEXTS[self.lang]['duration_label'])
+        self.start_button.configure(text=TEXTS[self.lang]['start_button'])
+        self.restart_button.configure(text=TEXTS[self.lang]['restart_button'])
+        self.countdown_label.configure(text=TEXTS[self.lang]['idle_label'])
+        self.result_title_label.configure(text=TEXTS[self.lang]['result_title'])
+        # History section
+        self.history_title.configure(text=TEXTS[self.lang]['history_title'])
+        # Settings section
+        self.settings_title.configure(text=TEXTS[self.lang]['settings_title'])
+        self.company_name_entry.configure(placeholder_text=TEXTS[self.lang]['settings_placeholder'])
+        self.save_button.configure(text=TEXTS[self.lang]['save_button'])
+
+    def _rebuild_tabview(self):
+        # Rebuild tabview with the new language labels
+        old_tab = self.tab_view.get()
+        old_values = self.tab_view._segmented_button.cget("values")
+        # Remove old tabview
+        self.tab_view.destroy()
+        # Create new tabview
+        self.tab_view = customtkinter.CTkTabview(
+            self.content_frame,
+            segmented_button_fg_color=COLOR_PRIMARY,
+            segmented_button_selected_color=COLOR_SECONDARY,
+            segmented_button_selected_hover_color=COLOR_SECONDARY,
+            text_color="white",
+            corner_radius=10,
+            width=800,
+            height=45
+        )
+        self.tab_view._segmented_button.configure(font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"))
+        self.tab_view.configure(command=self._on_tab_change)
+        self.tab_view.pack(fill="both", expand=True, padx=20, pady=10)
+        # Add tabs
+        labels = [
+            f"  {TEXTS[self.lang]['tab_menu']}  ",
+            f"  {TEXTS[self.lang]['tab_history']}  ",
+            f"  {TEXTS[self.lang]['tab_stats']}  ",
+            f"  {TEXTS[self.lang]['tab_settings']}  "
+        ]
+        self.menu_tab = self.tab_view.add(labels[0])
+        self.history_tab = self.tab_view.add(labels[1])
+        self.stats_tab = self.tab_view.add(labels[2])
+        self.settings_tab = self.tab_view.add(labels[3])
+        # Setup tabs content
+        self._setup_menu_tab()
+        self._setup_history_tab()
+        self._setup_stats_tab()
+        self._setup_settings_tab()
+        # Reload data
+        self.load_menu_items()
+        self.load_history()
+        # Restore tab selection
+        idx = list(old_values).index(old_tab) if old_tab in old_values else 0
+        self.tab_view.set(labels[idx])
+
+    def _refresh_ui_texts(self):
+        # Update header texts
+        self.title_label.configure(text=f"{TEXTS[self.lang]['title']} ({self.today})")
+        self.subtitle_label.configure(text=TEXTS[self.lang]['subtitle'])
+        # Update tab labels
+        btns = list(self.tab_view._segmented_button._buttons.values())
+        keys = ['tab_menu','tab_history','tab_stats','tab_settings']
+        for btn, key in zip(btns, keys):
+            btn.configure(text=TEXTS[self.lang][key])
+        # Update input section
+        self.input_title.configure(text=TEXTS[self.lang]['add_label'])
+        self.entry.configure(placeholder_text=TEXTS[self.lang]['entry_placeholder'])
+        self.add_button.configure(text=TEXTS[self.lang]['add_button'])
+        # Update menu list section
+        self.exclusion_title.configure(text=TEXTS[self.lang]['menu_list'])
+        self.exclusion_subtitle.configure(text=TEXTS[self.lang]['menu_list_subtitle'])
+        # Update selection section
+        self.selection_title.configure(text=TEXTS[self.lang]['selection_title'])
+        self.duration_label.configure(text=TEXTS[self.lang]['duration_label'])
+        self.start_button.configure(text=TEXTS[self.lang]['start_button'])
+        self.restart_button.configure(text=TEXTS[self.lang]['restart_button'])
+        self.countdown_label.configure(text=TEXTS[self.lang]['idle_label'])
+        self.result_title_label.configure(text=TEXTS[self.lang]['result_title'])
+        # Update history section
+        self.history_title.configure(text=TEXTS[self.lang]['history_title'])
+        # Update settings section
+        self.settings_title.configure(text=TEXTS[self.lang]['settings_title'])
+        self.company_name_entry.configure(placeholder_text=TEXTS[self.lang]['settings_placeholder'])
+        self.save_button.configure(text=TEXTS[self.lang]['save_button'])
+
+    def _refresh_ui_texts(self):
+        # Determine date string by language
+        now = datetime.datetime.now()
+        date_str = now.strftime("%Y년 %m월 %d일") if self.lang == 'ko' else now.strftime("%Y-%m-%d")
+        # Determine date string by language
+        now = datetime.datetime.now()
+        date_str = now.strftime("%Y년 %m월 %d일") if self.lang == 'ko' else now.strftime("%Y-%m-%d")
+        # Refresh window title and header label
+        company_name = self.db.get_setting('company_name')
+        if company_name:
+            # include company name
+            self.title(f"{company_name} {TEXTS[self.lang]['title']}")
+            self.title_label.configure(text=f"{company_name} {TEXTS[self.lang]['title']} ({date_str})")
+        else:
+            self.title(TEXTS[self.lang]['title'])
+            self.title_label.configure(text=f"{TEXTS[self.lang]['title']} ({date_str})")
+        # Update subtitle label
+        self.subtitle_label.configure(text=TEXTS[self.lang]['subtitle'])
+        # Update tab labels and maintain frames
+        sec_btn = self.tab_view._segmented_button
+        keys = ['tab_menu', 'tab_history', 'tab_stats', 'tab_settings']
+        # preserve current tab
+        old_current = self.tab_view.get()
+        # retrieve current tab labels
+        old_values = sec_btn.cget("values")
+        # compute new tab labels
+        new_labels = [f"  {TEXTS[self.lang][k]}  " for k in keys]
+        # update segmented button values
+        sec_btn.configure(values=new_labels)
+        # preserve current tab selection
+        current = self.tab_view.get()
+        if current in old_values:
+            idx = old_values.index(current)
+            self.tab_view.set(new_labels[idx])
+        # Update input section
+        self.input_title.configure(text=TEXTS[self.lang]['add_label'])
+        self.entry.configure(placeholder_text=TEXTS[self.lang]['entry_placeholder'])
+        self.add_button.configure(text=TEXTS[self.lang]['add_button'])
+        # Update menu list section
+        self.exclusion_title.configure(text=TEXTS[self.lang]['menu_list'])
+        self.exclusion_subtitle.configure(text=TEXTS[self.lang]['menu_list_subtitle'])
+        # Update selection section
+        self.selection_title.configure(text=TEXTS[self.lang]['selection_title'])
+        self.duration_label.configure(text=TEXTS[self.lang]['duration_label'])
+        self.start_button.configure(text=TEXTS[self.lang]['start_button'])
+        self.restart_button.configure(text=TEXTS[self.lang]['restart_button'])
+        self.countdown_label.configure(text=TEXTS[self.lang]['idle_label'])
+        self.result_title_label.configure(text=TEXTS[self.lang]['result_title'])
+        # Update history section
+        self.history_title.configure(text=TEXTS[self.lang]['history_title'])
+        # Update settings section
+        self.settings_title.configure(text=TEXTS[self.lang]['settings_title'])
+        self.company_name_entry.configure(placeholder_text=TEXTS[self.lang]['settings_placeholder'])
+        self.save_button.configure(text=TEXTS[self.lang]['save_button'])
+
 if __name__ == "__main__":
+
     app = LunchPickerApp()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
