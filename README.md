@@ -28,6 +28,8 @@
 
 - **커스텀 카운트다운**: 성격 급한 분들을 위한 3초 컷부터, 운명을 길게 즐기고 싶은 분들을 위한 15초까지. 당신의 심장을 쫄깃하게 만들 시간을 직접 선택하세요.
 
+- **식사별 파스텔 색상 테마**: 아침은 연한 노란색, 점심은 연한 초록색, 저녁은 연한 파란색으로 탭과 기록 배지를 구분하여 직관적인 UI를 제공합니다.
+
 ## 💻 다운로드 (Windows)
 
 [**최신 버전 다운로드**](https://github.com/dev-shinyu/Lunch-Picker/releases)
@@ -71,6 +73,8 @@
 - **Comprehensive Stats**: See which dishes have looted your wallet the most. The top contender earns the crown (👑)—maybe flash it to the chef for a freebie?
 - **Add/Remove Options**: Add new delights to the list or banish those you don’t crave with a single click. Your fingertip holds their fate.
 - **Custom Countdown**: Impatient? Go for a 3-second sprint. Craving drama? Stretch it to 15 seconds. Pick the thrill level.
+
+- **Meal-specific pastel color theme**: Enhance UI clarity by applying pastel yellow for breakfast, pastel green for lunch, and pastel blue for dinner to tabs and history badges.
 
 ## 💻 Download (Windows)
 

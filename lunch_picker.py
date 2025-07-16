@@ -107,6 +107,20 @@ COLOR_BG = "#ECF0F1"
 COLOR_BG_LIGHT = "#F8F9FA"  # Light background for frames
 COLOR_CARD = "#FFFFFF"
 
+# Pastel colors for meal tabs and badges
+PASTEL_COLORS = {
+    'breakfast': {'unselected': '#FFFDE7', 'selected': '#FFF9C4'},
+    'lunch': {'unselected': '#C8E6C9', 'selected': '#A5D6A7'},
+    'dinner': {'unselected': '#BBDEFB', 'selected': '#90CAF9'},
+}  
+
+# Pastel text colors for meal tabs and badges
+PASTEL_TEXT_COLORS = {
+    'breakfast': '#333333',  # Dark text for contrast
+    'lunch': 'white',
+    'dinner': 'white',
+}
+
 # Set appearance
 customtkinter.set_appearance_mode("Light")
 customtkinter.set_default_color_theme("blue")
@@ -176,10 +190,10 @@ class LunchPickerApp(customtkinter.CTk):
         # Create tab view with larger tabs
         self.tab_view = customtkinter.CTkTabview(
             self.content_frame,
-            segmented_button_fg_color=COLOR_PRIMARY,
-            segmented_button_selected_color=COLOR_SECONDARY,
-            segmented_button_selected_hover_color=COLOR_SECONDARY,
-            text_color="white",
+            segmented_button_fg_color=PASTEL_COLORS[self.meal]['unselected'],
+            segmented_button_selected_color=PASTEL_COLORS[self.meal]['selected'],
+            segmented_button_selected_hover_color=PASTEL_COLORS[self.meal]['selected'],
+            text_color=PASTEL_TEXT_COLORS[self.meal],
             corner_radius=10,
             width=800,
             height=45
@@ -362,7 +376,7 @@ class LunchPickerApp(customtkinter.CTk):
             fg_color=COLOR_SUCCESS,
             hover_color="#27AE60",
             height=60,
-            text_color="white",
+            text_color=PASTEL_TEXT_COLORS[self.meal],
             text_color_disabled="white",
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic")
         )
@@ -741,8 +755,8 @@ class LunchPickerApp(customtkinter.CTk):
                 master=frame,
                 text=MEAL_LABELS[self.lang][meal_type],
 
-                fg_color=COLOR_PRIMARY,
-                text_color="white",
+                fg_color=PASTEL_COLORS[meal_type]['selected'],
+                text_color=PASTEL_TEXT_COLORS[meal_type],
                 corner_radius=6,
                 font=customtkinter.CTkFont(size=12, weight="bold", family="Malgun Gothic")
             )
@@ -764,7 +778,7 @@ class LunchPickerApp(customtkinter.CTk):
                 height=30,
                 fg_color="#E74C3C",
                 hover_color="#C0392B",
-                text_color="white",
+                text_color=PASTEL_TEXT_COLORS[self.meal],
                 font=customtkinter.CTkFont(size=12, weight="bold", family="Malgun Gothic"),
                 command=lambda r_id=record_id: self.delete_history_item(r_id)
             )
@@ -1000,10 +1014,10 @@ class LunchPickerApp(customtkinter.CTk):
         # Create new tabview
         self.tab_view = customtkinter.CTkTabview(
             self.content_frame,
-            segmented_button_fg_color=COLOR_PRIMARY,
-            segmented_button_selected_color=COLOR_SECONDARY,
-            segmented_button_selected_hover_color=COLOR_SECONDARY,
-            text_color="white",
+            segmented_button_fg_color=PASTEL_COLORS[self.meal]['unselected'],
+            segmented_button_selected_color=PASTEL_COLORS[self.meal]['selected'],
+            segmented_button_selected_hover_color=PASTEL_COLORS[self.meal]['selected'],
+            text_color=PASTEL_TEXT_COLORS[self.meal],
             corner_radius=10,
             width=800,
             height=45
