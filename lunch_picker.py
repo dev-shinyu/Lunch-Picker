@@ -99,7 +99,8 @@ class LunchPickerApp(customtkinter.CTk):
         self.stats_tab = self.tab_view.add("  통계  ")
         self.settings_tab = self.tab_view.add("  설정  ")
 
-        # Setup all UI tabs
+        # --- Initialization Order --- 
+        # 1. Setup all UI tabs to create the widgets
         self._setup_menu_tab()
         self._setup_history_tab()
         self._setup_stats_tab()
@@ -107,16 +108,19 @@ class LunchPickerApp(customtkinter.CTk):
 
         self.stats_animation = None # To hold the animation object
 
-        # Load initial data from DB
-        self.load_menu_items()
-        self._apply_auto_exclusion()
-        self.load_history()
-        # self.update_stats_graph() # Now called on tab change
-
+        # 2. Load data and configure the widgets
         self._load_company_name()
-
-        # Set initial UI state using the new centralized method
+        self.load_menu_items()  # This calls _apply_auto_exclusion internally
+        self.load_history()
+        
+        # 3. Set the final initial UI state
         self._update_ui_for_state('idle')
+
+        # Load initial data from DB and set initial state
+        # self._load_company_name()
+        # self.load_menu_items() # This now calls _apply_auto_exclusion internally
+        # self.load_history()
+        # self.update_stats_graph() # Now called on tab change
 
     def _on_tab_change(self, tab_name=None):
         # Stop any running animation when changing tabs
@@ -597,7 +601,7 @@ class LunchPickerApp(customtkinter.CTk):
             # Game-like "slot machine" animation for each second
             self._animate_digit(10, remaining) # Animate 10 frames before showing the number
         else:
-            self._select_menu()
+            self.after(500, self._select_menu)
 
     def _animate_digit(self, frame, final_digit):
         if frame > 0:
@@ -615,30 +619,32 @@ class LunchPickerApp(customtkinter.CTk):
             self.countdown_label.configure(
                 text=str(final_digit),
                 font=customtkinter.CTkFont(size=120, weight="bold"),
-                text_color=COLOR_PRIMARY
+                text_color=COLOR_SECONDARY
             )
-            # Schedule the next second of the countdown
-            self.after(700, self._run_countdown, final_digit - 1)
+            # Proceed to the next second in the countdown
+            self.after(1000, self._run_countdown, final_digit - 1)
 
     def _select_menu(self):
-        available_items = []
         all_items = self.db.get_menu_items()
-        for item_id, name, is_excluded in all_items:
-            if not is_excluded:
-                available_items.append((item_id, name))
+        available_items = [(id, name) for id, name, excluded in all_items if not excluded]
 
         if not available_items:
-            self.countdown_label.configure(text="선택할 식당이 없습니다!", text_color=COLOR_ACCENT)
-            self.reset_selection()
+            self.countdown_label.configure(
+                text="추첨할 식당이 없습니다!",
+                font=customtkinter.CTkFont(size=24, weight="bold", family="Malgun Gothic"),
+                text_color=COLOR_WARNING
+            )
+            self._update_ui_for_state('idle')
             return
 
         selected_item_id, selected_name = random.choice(available_items)
 
         # --- Data-centric update ---
         self.db.record_selection(selected_item_id)
+        # After selection, the only excluded item should be the one just chosen.
         self.db.reset_all_exclusions()
         self.db.update_exclusion(selected_item_id, True)
-        self.load_menu_items() # Reloads UI from DB
+        self.load_menu_items() # Reloads UI from DB to show the new auto-exclusion
 
         # --- UI Finalization ---
         self.countdown_label.configure(
@@ -647,9 +653,10 @@ class LunchPickerApp(customtkinter.CTk):
             text_color=COLOR_SUCCESS
         )
 
-        # Update history and stats first
+        # Update history and stats tabs in the background
         self.load_history()
-        self.update_stats_graph()
+        if self.tab_view.get() == "통계": # Only update graph if visible
+            self.update_stats_graph()
 
         self._update_ui_for_state('result')
 
