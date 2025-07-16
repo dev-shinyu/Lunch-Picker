@@ -608,6 +608,15 @@ class LunchPickerApp(customtkinter.CTk):
         
         # Load from database
         history = self.db.get_history()
+        if not history:
+            no_history_label = customtkinter.CTkLabel(
+                self.history_list,
+                text="선택 기록이 없습니다.",
+                font=customtkinter.CTkFont(size=14, family="Malgun Gothic"),
+                text_color="#95a5a6"
+            )
+            no_history_label.pack(pady=20)
+            return
         for i, (record_id, timestamp, name) in enumerate(history):
             frame = customtkinter.CTkFrame(self.history_list, fg_color=COLOR_CARD, corner_radius=8)
             frame.pack(fill="x", padx=10, pady=5)
