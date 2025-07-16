@@ -6,6 +6,7 @@ class MenuDB:
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
         self._create_tables()
+        self._migrate_history_meal_column()
 
     def _create_tables(self):
         self.cursor.execute("""
@@ -55,16 +56,20 @@ class MenuDB:
         )
         self.conn.commit()
 
-    def record_selection(self, item_id):
+    def record_selection(self, item_id, meal_type=None):
+        # Record selection with meal_type
+        if meal_type is None:
+            meal_type = 'lunch'
         self.cursor.execute(
-            "INSERT INTO selection_history (menu_item_id) VALUES (?)",
-            (item_id,)
+            "INSERT INTO selection_history (menu_item_id, meal_type) VALUES (?, ?)",
+            (item_id, meal_type)
         )
         self.conn.commit()
 
     def get_history(self, limit=50):
+        # Include meal_type in history records
         self.cursor.execute("""
-            SELECT h.id, h.selected_at, m.name 
+            SELECT h.id, h.selected_at, h.meal_type, m.name
             FROM selection_history h
             JOIN menu_items m ON h.menu_item_id = m.id
             ORDER BY h.selected_at DESC
@@ -112,6 +117,16 @@ class MenuDB:
     def reset_all_exclusions(self):
         self.cursor.execute("UPDATE menu_items SET is_excluded = 0")
         self.conn.commit()
+
+    def _migrate_history_meal_column(self):
+        # Add meal_type column if missing
+        self.cursor.execute("PRAGMA table_info(selection_history)")
+        cols = [row[1] for row in self.cursor.fetchall()]
+        if 'meal_type' not in cols:
+            self.cursor.execute(
+                "ALTER TABLE selection_history ADD COLUMN meal_type TEXT DEFAULT 'lunch'"
+            )
+            self.conn.commit()
 
     def close(self):
         self.conn.close()
