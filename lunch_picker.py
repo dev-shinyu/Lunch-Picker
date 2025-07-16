@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
+from matplotlib.animation import FuncAnimation
 
 # --- Matplotlib 한글/이모지 폰트 설정 ---
 # Windows에서 이모지와 한글을 모두 지원하기 위해 폰트 리스트를 설정합니다.
@@ -89,6 +90,7 @@ class LunchPickerApp(customtkinter.CTk):
             height=45
         )
         self.tab_view._segmented_button.configure(font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"))
+        self.tab_view.configure(command=self._on_tab_change)
         self.tab_view.pack(fill="both", expand=True, padx=20, pady=10)
 
         # Create tabs with padding
@@ -103,16 +105,30 @@ class LunchPickerApp(customtkinter.CTk):
         self._setup_stats_tab()
         self._setup_settings_tab()
 
+        self.stats_animation = None # To hold the animation object
+
         # Load initial data from DB
         self.load_menu_items()
         self._apply_auto_exclusion()
         self.load_history()
-        self.update_stats_graph()
+        # self.update_stats_graph() # Now called on tab change
 
         self._load_company_name()
 
         # Set initial UI state using the new centralized method
         self._update_ui_for_state('idle')
+
+    def _on_tab_change(self, tab_name=None):
+        # Stop any running animation when changing tabs
+        if self.stats_animation and self.stats_animation.event_source:
+            self.stats_animation.event_source.stop()
+            self.stats_animation = None
+
+        current_tab = self.tab_view.get()
+        if current_tab == "  통계  ":
+            self.update_stats_graph()
+        elif current_tab == "  선택 기록  ":
+            self.load_history()
     def _setup_menu_tab(self):
         # Main content frame
         main_frame = customtkinter.CTkFrame(self.menu_tab, fg_color="transparent")
@@ -291,87 +307,76 @@ class LunchPickerApp(customtkinter.CTk):
         self.stats_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def update_stats_graph(self):
+        if self.stats_animation and self.stats_animation.event_source:
+            self.stats_animation.event_source.stop()
+            self.stats_animation = None
+
         stats = self.db.get_selection_stats()
         self.stats_ax.clear()
 
         if not stats:
             self.stats_ax.text(0.5, 0.5, "선택 기록이 없습니다.", ha='center', va='center', fontsize=18, color=COLOR_SECONDARY)
-            self.stats_ax.set_xticks([])
-            self.stats_ax.set_yticks([])
-            self.stats_ax.spines['right'].set_visible(False)
-            self.stats_ax.spines['top'].set_visible(False)
-            self.stats_ax.spines['left'].set_visible(False)
-            self.stats_ax.spines['bottom'].set_visible(False)
+            self.stats_ax.set_xticks([]); self.stats_ax.set_yticks([])
+            self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
+            self.stats_ax.spines['left'].set_visible(False); self.stats_ax.spines['bottom'].set_visible(False)
         else:
-            # --- Ranks, Colors, and Sorting Logic ---
+            names = [item[0] for item in stats]
             all_counts = [item[1] for item in stats]
-            unique_sorted_counts = sorted(list(set(all_counts)), reverse=True)
+            names.reverse(); all_counts.reverse()
 
-            count_1st = unique_sorted_counts[0] if len(unique_sorted_counts) > 0 else -1
-            count_2nd = unique_sorted_counts[1] if len(unique_sorted_counts) > 1 else -1
-            
-            colors = []
-            ranked_names = []
-            last_count = -1
-            last_rank = 0
+            self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
+            bars = self.stats_ax.barh(names, [0] * len(names), height=0.6, color=COLOR_SILVER)
 
-            for i, (name, count) in enumerate(stats):
-                # Determine rank (handles ties)
-                rank = i + 1
-                if count == last_count:
-                    rank = last_rank
-                
-                # Determine color and emoji based on rank
-                rank_prefix = ""
-                bar_color = COLOR_SILVER # Default for 3rd+
-
-                if count == count_1st:
-                    bar_color = COLOR_SUCCESS
-                    rank_prefix = "👑 "
-                elif count == count_2nd:
-                    bar_color = COLOR_PRIMARY # 2nd place is now blue
-                    rank_prefix = "🥈 "
-
-                colors.append(bar_color)
-                ranked_names.append(f"{rank_prefix}{rank}위. {name}")
-                last_count = count
-                last_rank = rank
-
-            # Reverse lists for correct barh order (highest at top)
-            ranked_names.reverse()
-            all_counts.reverse()
-            colors.reverse()
-            # ----------------------------------------
-
-            # Horizontal bar chart
-            bars = self.stats_ax.barh(ranked_names, all_counts, height=0.6, color=colors)
-
-            # Adjust axis limits for better appearance
-            self.stats_ax.set_xlim(right=max(all_counts) + 1)
-
-            num_items = len(ranked_names)
-            if num_items == 1:
-                self.stats_ax.set_ylim(-1, 1)
-            elif 2 <= num_items < 5:
-                self.stats_ax.set_ylim(-0.5, num_items - 0.5 + 1)
-            
-            # Style the plot
             self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
             self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
             self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
             self.stats_ax.tick_params(axis='y', colors=COLOR_SECONDARY, labelsize=11)
-            self.stats_ax.spines['right'].set_visible(False)
-            self.stats_ax.spines['top'].set_visible(False)
-            self.stats_ax.spines['left'].set_color('#DDDDDD')
-            self.stats_ax.spines['bottom'].set_color('#DDDDDD')
+            self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
+            self.stats_ax.spines['left'].set_color('#DDDDDD'); self.stats_ax.spines['bottom'].set_color('#DDDDDD')
             self.stats_ax.grid(axis='x', color='#EAEAEA', linestyle='--', linewidth=0.7)
             self.stats_ax.set_axisbelow(True)
 
-            # Add value labels on bars
-            for bar in bars:
-                width = bar.get_width()
-                self.stats_ax.text(width + 0.1, bar.get_y() + bar.get_height()/2, f'{int(width)}', va='center', ha='left', color=COLOR_SECONDARY)
+            def animate(frame):
+                for i, bar in enumerate(bars):
+                    target_width = all_counts[i]
+                    current_width = (target_width / frames) * (frame + 1)
+                    bar.set_width(current_width)
+                
+                if frame == frames - 1:
+                    unique_sorted_counts = sorted(list(set(all_counts)), reverse=True)
+
+                    ranked_names = []
+                    # Iterate in the original order of bars (which is reversed from stats)
+                    for i, (name, count) in enumerate(zip(names, all_counts)):
+                        # Determine rank
+                        try:
+                            rank = unique_sorted_counts.index(count) + 1
+                        except ValueError:
+                            rank = len(unique_sorted_counts) # Should not happen, fallback
+
+                        # Determine prefix and color
+                        rank_prefix = f"{rank}위. "
+                        bar_color = COLOR_SILVER
+                        
+                        if rank == 1:
+                            bar_color = COLOR_SUCCESS
+                            rank_prefix += "👑 "
+                        elif rank == 2:
+                            bar_color = COLOR_PRIMARY
+                            rank_prefix += "🥈 "
+                        
+                        bars[i].set_color(bar_color)
+                        ranked_names.append(f"{rank_prefix}{name}")
+                        
+                        # Add value labels
+                        self.stats_ax.text(count + 0.1, i, f'{int(count)}', va='center', ha='left', color=COLOR_SECONDARY, fontsize=10)
+
+                    self.stats_ax.set_yticklabels(ranked_names)
+                return bars
+
+            frames = 30
+            self.stats_animation = FuncAnimation(self.stats_fig, animate, frames=frames, interval=20, blit=False, repeat=False)
 
         self.stats_fig.tight_layout(pad=3.0)
         self.stats_canvas.draw()
