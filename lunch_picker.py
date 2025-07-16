@@ -116,12 +116,6 @@ class LunchPickerApp(customtkinter.CTk):
         # 3. Set the final initial UI state
         self._update_ui_for_state('idle')
 
-        # Load initial data from DB and set initial state
-        # self._load_company_name()
-        # self.load_menu_items() # This now calls _apply_auto_exclusion internally
-        # self.load_history()
-        # self.update_stats_graph() # Now called on tab change
-
     def _on_tab_change(self, tab_name=None):
         # Stop any running animation when changing tabs
         if self.stats_animation and self.stats_animation.event_source:
@@ -133,6 +127,7 @@ class LunchPickerApp(customtkinter.CTk):
             self.update_stats_graph()
         elif current_tab == "  선택 기록  ":
             self.load_history()
+            
     def _setup_menu_tab(self):
         # Main content frame
         main_frame = customtkinter.CTkFrame(self.menu_tab, fg_color="transparent")
@@ -290,15 +285,32 @@ class LunchPickerApp(customtkinter.CTk):
             corner_radius=15
         )
         self.result_frame.pack(pady=0, padx=20, fill="both", expand=True)
-        self.result_frame.pack_propagate(False)
+        self.result_frame.grid_columnconfigure(0, weight=1)
+        self.result_frame.grid_rowconfigure(0, weight=1)
+        self.result_frame.grid_rowconfigure(1, weight=1)
         
         self.countdown_label = customtkinter.CTkLabel(
             self.result_frame,
             text="",
             font=customtkinter.CTkFont(size=18, family="Malgun Gothic"),
-            wraplength=300  # Enable text wrapping
+            wraplength=300
         )
         self.countdown_label.pack(expand=True)
+
+        # Labels for the final result (initially hidden)
+        self.result_title_label = customtkinter.CTkLabel(
+            self.result_frame,
+            text="오늘의 선택은",
+            font=customtkinter.CTkFont(size=16, family="Malgun Gothic"),
+            text_color="#95a5a6"  # A soft gray color
+        )
+
+        self.result_label = customtkinter.CTkLabel(
+            self.result_frame,
+            text="",
+            font=customtkinter.CTkFont(size=36, weight="bold", family="Malgun Gothic"),
+            text_color=COLOR_SUCCESS
+        )
 
     def _setup_stats_tab(self):
         stats_frame = customtkinter.CTkFrame(self.stats_tab, fg_color="transparent")
@@ -311,78 +323,68 @@ class LunchPickerApp(customtkinter.CTk):
         self.stats_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def update_stats_graph(self):
-        if self.stats_animation and self.stats_animation.event_source:
-            self.stats_animation.event_source.stop()
-            self.stats_animation = None
-
-        stats = self.db.get_selection_stats()
         self.stats_ax.clear()
+        stats = self.db.get_selection_stats()
 
         if not stats:
             self.stats_ax.text(0.5, 0.5, "선택 기록이 없습니다.", ha='center', va='center', fontsize=18, color=COLOR_SECONDARY)
             self.stats_ax.set_xticks([]); self.stats_ax.set_yticks([])
             self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
             self.stats_ax.spines['left'].set_visible(False); self.stats_ax.spines['bottom'].set_visible(False)
-        else:
-            names = [item[0] for item in stats]
-            all_counts = [item[1] for item in stats]
-            names.reverse(); all_counts.reverse()
+            self.stats_canvas.draw()
+            return
 
-            self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
-            bars = self.stats_ax.barh(names, [0] * len(names), height=0.6, color=COLOR_SILVER)
+        # 데이터 정렬 및 순위, 색상, 이름 준비
+        stats.sort(key=lambda x: x[1])
+        names = [item[0] for item in stats]
+        all_counts = [item[1] for item in stats]
+        y_pos = range(len(names))
 
-            self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
-            self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
-            self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-            self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
-            self.stats_ax.tick_params(axis='y', colors=COLOR_SECONDARY, labelsize=11)
-            self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
-            self.stats_ax.spines['left'].set_color('#DDDDDD'); self.stats_ax.spines['bottom'].set_color('#DDDDDD')
-            self.stats_ax.grid(axis='x', color='#EAEAEA', linestyle='--', linewidth=0.7)
-            self.stats_ax.set_axisbelow(True)
+        unique_sorted_counts = sorted(list(set(all_counts)), reverse=True)
+        colors = []
+        ranked_names = []
+        for name, count in zip(names, all_counts):
+            rank = unique_sorted_counts.index(count) + 1
+            emoji, color = "", COLOR_SILVER
+            if rank == 1:
+                color, emoji = COLOR_SUCCESS, "👑 "
+            elif rank == 2:
+                color, emoji = COLOR_PRIMARY, "🥈 "
+            colors.append(color)
+            ranked_names.append(f"{emoji}{rank}위. {name}")
 
-            def animate(frame):
-                for i, bar in enumerate(bars):
-                    target_width = all_counts[i]
-                    current_width = (target_width / frames) * (frame + 1)
-                    bar.set_width(current_width)
-                
-                if frame == frames - 1:
-                    unique_sorted_counts = sorted(list(set(all_counts)), reverse=True)
+        # 그래프 그리기
+        self.stats_ax.barh(y_pos, all_counts, height=0.6, align='center', color=colors)
+        self.stats_ax.set_yticks(y_pos)
+        
+        # 폰트 문제를 해결하기 위해 rcParams를 임시로 변경
+        original_font_family = plt.rcParams['font.family']
+        try:
+            plt.rcParams['font.family'] = ['Malgun Gothic', 'Segoe UI Emoji']
+            self.stats_ax.set_yticklabels(ranked_names)
+        finally:
+            plt.rcParams['font.family'] = original_font_family
 
-                    ranked_names = []
-                    # Iterate in the original order of bars (which is reversed from stats)
-                    for i, (name, count) in enumerate(zip(names, all_counts)):
-                        # Determine rank
-                        try:
-                            rank = unique_sorted_counts.index(count) + 1
-                        except ValueError:
-                            rank = len(unique_sorted_counts) # Should not happen, fallback
+        # 제목 및 레이블 설정
+        self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
+        self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
+        self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
+        self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-                        # Determine prefix and color
-                        rank_prefix = f"{rank}위. "
-                        bar_color = COLOR_SILVER
-                        
-                        if rank == 1:
-                            bar_color = COLOR_SUCCESS
-                            rank_prefix += "👑 "
-                        elif rank == 2:
-                            bar_color = COLOR_PRIMARY
-                            rank_prefix += "🥈 "
-                        
-                        bars[i].set_color(bar_color)
-                        ranked_names.append(f"{rank_prefix}{name}")
-                        
-                        # Add value labels
-                        self.stats_ax.text(count + 0.1, i, f'{int(count)}', va='center', ha='left', color=COLOR_SECONDARY, fontsize=10)
+        # 스타일링
+        self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
+        self.stats_ax.tick_params(axis='y', colors=COLOR_SECONDARY, labelsize=11)
+        self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
+        self.stats_ax.spines['left'].set_color('#DDDDDD'); self.stats_ax.spines['bottom'].set_color('#DDDDDD')
+        self.stats_ax.grid(axis='x', color='#EAEAEA', linestyle='--', linewidth=0.7)
+        self.stats_ax.set_axisbelow(True)
 
-                    self.stats_ax.set_yticklabels(ranked_names)
-                return bars
+        # 막대 위에 횟수 표시
+        for i, count in enumerate(all_counts):
+            self.stats_ax.text(count + 0.1, i, f'{int(count)}', va='center', ha='left', color=COLOR_SECONDARY, fontsize=10)
 
-            frames = 30
-            self.stats_animation = FuncAnimation(self.stats_fig, animate, frames=frames, interval=20, blit=False, repeat=False)
-
-        self.stats_fig.tight_layout(pad=3.0)
+        # 레이아웃 조정 및 그리기
+        self.stats_fig.subplots_adjust(left=0.3, right=0.95, top=0.9, bottom=0.15)
         self.stats_canvas.draw()
 
     def _setup_settings_tab(self):
@@ -648,11 +650,12 @@ class LunchPickerApp(customtkinter.CTk):
         self.load_menu_items() # Reloads UI from DB to show the new auto-exclusion
 
         # --- UI Finalization ---
-        self.countdown_label.configure(
-            text=f"오늘의 식당: {selected_name}",
-            font=customtkinter.CTkFont(size=28, weight="bold", family="Malgun Gothic"),
-            text_color=COLOR_SUCCESS
-        )
+        self.countdown_label.pack_forget() # Hide the idle/countdown label
+
+        # Place the styled result labels using grid
+        self.result_label.configure(text=selected_name)
+        self.result_title_label.grid(row=0, column=0, sticky="s", pady=(0, 2))
+        self.result_label.grid(row=1, column=0, sticky="n", pady=(2, 0))
 
         # Update history and stats tabs in the background
         self.load_history()
@@ -678,8 +681,10 @@ class LunchPickerApp(customtkinter.CTk):
         self.load_menu_items()
         # ------------------------------
 
-        # Clear result label
-        self.countdown_label.configure(text="")
+        # Hide result labels and show the idle label
+        self.result_title_label.grid_forget()
+        self.result_label.grid_forget()
+        self.countdown_label.pack(expand=True)
 
         self._update_ui_for_state('idle')
 
@@ -689,6 +694,12 @@ class LunchPickerApp(customtkinter.CTk):
             # Show start, hide restart
             self.restart_button.pack_forget()
             self.start_button.pack(fill="x")
+            
+            self.countdown_label.configure(
+                text="오늘 점심은 무엇을 먹을까요?",
+                font=customtkinter.CTkFont(size=22, weight="bold", family="Malgun Gothic"),
+                text_color=COLOR_SECONDARY
+            )
             
             # Enable all controls
             self.start_button.configure(state="normal")
