@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHh1a3JqZ3hkaGZqYnJzY254b2R0eXNnY2VqYmZtYjV0c3J6c25nZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2zbskZp2j8wniE/giphy.gif" width="400"/>
+</div>
+
 # N78 점심 메뉴 선택기: 결정장애 종결자
 
 > "오늘 뭐 먹지?" 
@@ -23,6 +27,12 @@
 - **식당 추가/제외**: 새로운 맛집을 리스트에 추가하고, 당분간 가고 싶지 않은 곳은 체크 한 번으로 심판하세요. 당신의 손가락 하나에 식당의 운명이 달렸습니다.
 
 - **커스텀 카운트다운**: 성격 급한 분들을 위한 3초 컷부터, 운명을 길게 즐기고 싶은 분들을 위한 15초까지. 당신의 심장을 쫄깃하게 만들 시간을 직접 선택하세요.
+
+## 💻 다운로드 (Windows)
+
+[**최신 버전 다운로드**](https://github.com/dev-shinyu/Lunch-Picker/releases)
+
+위 링크를 클릭하여 'Releases' 페이지로 이동한 후, 최신 버전의 `lunch_picker.exe` 파일을 받아 실행하세요.
 
 ## 👨‍💻 사용법
 
