@@ -51,10 +51,6 @@
 
 ---
 
-<div align="center">
-  <img src="./images/lunch.gif" width="400"/>
-</div>
-
 # N78 Meal Menu Picker: The Cure for Decision Paralysis
 
 > “What should I eat today?”
