@@ -524,23 +524,24 @@ class LunchPickerApp(customtkinter.CTk):
 
     def _apply_auto_exclusion(self):
         last_selected = self.db.get_last_selected_menu()
-        if not last_selected:
-            self.auto_excluded_label.configure(text="")
-            return
+        if last_selected:
+            # Find the ID of the last selected menu to update its exclusion status in the DB
+            all_items = self.db.get_menu_items()
+            item_id_to_exclude = None
+            for item_id, name, _ in all_items:
+                if name == last_selected:
+                    item_id_to_exclude = item_id
+                    break
+            
+            if item_id_to_exclude:
+                self.db.update_exclusion(item_id_to_exclude, True)
 
-        # Find the ID of the last selected menu to update its exclusion status in the DB
-        all_items = self.db.get_menu_items()
-        item_id_to_exclude = None
-        for item_id, name, _ in all_items:
-            if name == last_selected:
-                item_id_to_exclude = item_id
-                break
-
-        if item_id_to_exclude:
-            self.db.update_exclusion(item_id_to_exclude, True)
-            self.auto_exclude_label.configure(text=f"최근 선택: {last_selected} (자동 제외)", text_color=COLOR_SECONDARY)
+            # Update and show the label
+            self.auto_exclude_label.configure(text=f"최근 선택: {last_selected} (자동 제외)")
+            self.auto_exclude_label.pack(pady=(0, 5), padx=20, fill="x")
         else:
-            self.auto_exclude_label.configure(text="")
+            # Hide the label if nothing was selected previously
+            self.auto_exclude_label.pack_forget()
 
     def load_history(self):
         # Clear existing history
