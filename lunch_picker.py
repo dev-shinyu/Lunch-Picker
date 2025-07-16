@@ -43,7 +43,7 @@ class LunchPickerApp(customtkinter.CTk):
         self.db = MenuDB()
 
         # Configure window
-        self.title("N78 점심 식당 선택")
+        self.title("점심 식당 선택")
         self.geometry("900x700")
         self.minsize(800, 600)
         self.configure(fg_color=COLOR_BG)
@@ -58,7 +58,7 @@ class LunchPickerApp(customtkinter.CTk):
         # Create title label with date
         self.title_label = customtkinter.CTkLabel(
             self,
-            text=f"N78 점심 식당 선택 ({today})",
+            text=f"점심 식당 선택 ({today})",
             font=customtkinter.CTkFont(size=28, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
@@ -95,17 +95,21 @@ class LunchPickerApp(customtkinter.CTk):
         self.menu_tab = self.tab_view.add("  식당 관리  ")
         self.history_tab = self.tab_view.add("  선택 기록  ")
         self.stats_tab = self.tab_view.add("  통계  ")
+        self.settings_tab = self.tab_view.add("  설정  ")
 
         # Setup all UI tabs
         self._setup_menu_tab()
         self._setup_history_tab()
         self._setup_stats_tab()
+        self._setup_settings_tab()
 
         # Load initial data from DB
         self.load_menu_items()
         self._apply_auto_exclusion()
         self.load_history()
         self.update_stats_graph()
+
+        self._load_company_name()
 
         # Set initial UI state using the new centralized method
         self._update_ui_for_state('idle')
@@ -371,6 +375,75 @@ class LunchPickerApp(customtkinter.CTk):
 
         self.stats_fig.tight_layout(pad=3.0)
         self.stats_canvas.draw()
+
+    def _setup_settings_tab(self):
+        settings_frame = customtkinter.CTkFrame(self.settings_tab, fg_color="transparent")
+        settings_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        settings_card = customtkinter.CTkFrame(settings_frame, fg_color=COLOR_CARD, corner_radius=12)
+        settings_card.pack(fill="x", pady=10)
+
+        title = customtkinter.CTkLabel(
+            settings_card,
+            text="회사명 설정",
+            font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
+            text_color=COLOR_SECONDARY
+        )
+        title.pack(pady=(20, 10), padx=20, anchor="w")
+
+        input_frame = customtkinter.CTkFrame(settings_card, fg_color="transparent")
+        input_frame.pack(pady=10, padx=20, fill="x")
+
+        self.company_name_entry = customtkinter.CTkEntry(
+            input_frame,
+            placeholder_text="회사명을 입력하세요",
+            corner_radius=8,
+            height=45,
+            font=customtkinter.CTkFont(size=14, family="Malgun Gothic")
+        )
+        self.company_name_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+
+        save_button = customtkinter.CTkButton(
+            input_frame,
+            text="저장",
+            command=self._save_company_name,
+            fg_color=COLOR_PRIMARY,
+            hover_color="#3A7BCC",
+            width=80,
+            height=45,
+            font=customtkinter.CTkFont(size=14, weight="bold", family="Malgun Gothic")
+        )
+        save_button.pack(side="right")
+
+        self.save_status_label = customtkinter.CTkLabel(
+            settings_card,
+            text="",
+            font=customtkinter.CTkFont(size=12, family="Malgun Gothic"),
+            text_color=COLOR_SUCCESS
+        )
+        self.save_status_label.pack(pady=(0, 20), padx=20)
+
+    def _load_company_name(self):
+        company_name = self.db.get_setting('company_name')
+        if company_name:
+            today = datetime.datetime.now().strftime("%Y년 %m월 %d일")
+            self.title(f"{company_name} 점심 식당 선택")
+            self.title_label.configure(text=f"{company_name} 점심 식당 선택 ({today})")
+            if hasattr(self, 'company_name_entry'):
+                self.company_name_entry.insert(0, company_name)
+
+    def _save_company_name(self):
+        company_name = self.company_name_entry.get().strip()
+        if company_name:
+            self.db.update_setting('company_name', company_name)
+            today = datetime.datetime.now().strftime("%Y년 %m월 %d일")
+            self.title(f"{company_name} 점심 식당 선택")
+            self.title_label.configure(text=f"{company_name} 점심 식당 선택 ({today})")
+            self.save_status_label.configure(text="회사명이 저장되었습니다.")
+            self.after(3000, lambda: self.save_status_label.configure(text=""))
+        else:
+            from tkinter import messagebox
+            messagebox.showwarning("입력 오류", "회사명을 입력해주세요.")
 
     def _setup_history_tab(self):
         # History frame

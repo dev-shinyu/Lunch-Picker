@@ -24,6 +24,13 @@ class MenuDB:
             FOREIGN KEY(menu_item_id) REFERENCES menu_items(id)
         )
         """)
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+        """)
         self.conn.commit()
 
     def add_menu_item(self, name):
@@ -89,6 +96,18 @@ class MenuDB:
         """)
         result = self.cursor.fetchone()
         return result[0] if result else None
+
+    def get_setting(self, key):
+        self.cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+        result = self.cursor.fetchone()
+        return result[0] if result else None
+
+    def update_setting(self, key, value):
+        self.cursor.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            (key, value)
+        )
+        self.conn.commit()
 
     def reset_all_exclusions(self):
         self.cursor.execute("UPDATE menu_items SET is_excluded = 0")
