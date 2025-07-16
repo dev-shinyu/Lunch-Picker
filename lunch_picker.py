@@ -323,6 +323,10 @@ class LunchPickerApp(customtkinter.CTk):
         self.stats_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def update_stats_graph(self):
+        # Stop any existing animation to prevent conflicts
+        if hasattr(self, 'stats_animation') and self.stats_animation and self.stats_animation.event_source:
+            self.stats_animation.event_source.stop()
+
         self.stats_ax.clear()
         stats = self.db.get_selection_stats()
 
@@ -353,11 +357,23 @@ class LunchPickerApp(customtkinter.CTk):
             colors.append(color)
             ranked_names.append(f"{emoji}{rank}위. {name}")
 
-        # 그래프 그리기
-        self.stats_ax.barh(y_pos, all_counts, height=0.6, align='center', color=colors)
+        # 그래프 기본 틀과 스타일 설정
+        self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
+        self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
+        self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
+        self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
+        self.stats_ax.tick_params(axis='y', colors=COLOR_SECONDARY, labelsize=11)
+        self.stats_ax.spines['right'].set_visible(False)
+        self.stats_ax.spines['top'].set_visible(False)
+        self.stats_ax.spines['left'].set_color('#DDDDDD')
+        self.stats_ax.spines['bottom'].set_color('#DDDDDD')
+        self.stats_ax.grid(axis='x', color='#EAEAEA', linestyle='--', linewidth=0.7)
+        self.stats_ax.set_axisbelow(True)
+        self.stats_fig.subplots_adjust(left=0.3, right=0.95, top=0.9, bottom=0.15)
+
+        # y축 레이블 설정 (폰트 처리 포함)
         self.stats_ax.set_yticks(y_pos)
-        
-        # 폰트 문제를 해결하기 위해 rcParams를 임시로 변경
         original_font_family = plt.rcParams['font.family']
         try:
             plt.rcParams['font.family'] = ['Malgun Gothic', 'Segoe UI Emoji']
@@ -365,26 +381,39 @@ class LunchPickerApp(customtkinter.CTk):
         finally:
             plt.rcParams['font.family'] = original_font_family
 
-        # 제목 및 레이블 설정
-        self.stats_ax.set_title('식당별 누적 선택 횟수', fontsize=16, weight='bold', color=COLOR_SECONDARY)
-        self.stats_ax.set_xlabel('선택 횟수', fontsize=12, color=COLOR_SECONDARY)
-        self.stats_ax.set_xlim(0, max(all_counts) + 1.5)
-        self.stats_ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        # 애니메이션을 위한 막대그래프 초기화 (너비 0)
+        bars = self.stats_ax.barh(y_pos, [0] * len(all_counts), height=0.6, align='center', color=colors)
 
-        # 스타일링
-        self.stats_ax.tick_params(axis='x', colors=COLOR_SECONDARY)
-        self.stats_ax.tick_params(axis='y', colors=COLOR_SECONDARY, labelsize=11)
-        self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
-        self.stats_ax.spines['left'].set_color('#DDDDDD'); self.stats_ax.spines['bottom'].set_color('#DDDDDD')
-        self.stats_ax.grid(axis='x', color='#EAEAEA', linestyle='--', linewidth=0.7)
-        self.stats_ax.set_axisbelow(True)
+        # 애니메이션 함수 정의
+        def animate(frame):
+            # 각 프레임마다 막대의 너비를 점진적으로 증가
+            for i, bar in enumerate(bars):
+                target_width = all_counts[i]
+                current_width = target_width * (frame / 100.0) # 100 프레임에 걸쳐 증가
+                bar.set_width(current_width)
+            return bars
 
-        # 막대 위에 횟수 표시
-        for i, count in enumerate(all_counts):
-            self.stats_ax.text(count + 0.1, i, f'{int(count)}', va='center', ha='left', color=COLOR_SECONDARY, fontsize=10)
+        # 애니메이션 실행
+        self.stats_animation = FuncAnimation(
+            self.stats_fig, 
+            animate, 
+            frames=101, # 0부터 100까지
+            interval=15, # 15ms 간격
+            blit=True, # 블리팅으로 성능 최적화
+            repeat=False # 반복 안 함
+        )
 
-        # 레이아웃 조정 및 그리기
-        self.stats_fig.subplots_adjust(left=0.3, right=0.95, top=0.9, bottom=0.15)
+        # 애니메이션이 끝난 후, 막대 옆에 최종 횟수 표시
+        def on_animation_end():
+            # 애니메이션이 끝난 후 최종 값을 막대 옆에 텍스트로 표시
+            for i, count in enumerate(all_counts):
+                if self.stats_ax.get_xlim()[1] > count + 0.1: # 그래프 범위 내에 있을 때만 표시
+                    self.stats_ax.text(count + 0.1, i, f'{int(count)}', va='center', ha='left', color=COLOR_SECONDARY, fontsize=10)
+            self.stats_canvas.draw_idle() # 최종 상태를 다시 그림
+        
+        # 애니메이션 총 시간 이후에 콜백 실행 (약간의 지연 추가)
+        self.after(int(101 * 15 + 50), on_animation_end)
+        
         self.stats_canvas.draw()
 
     def _setup_settings_tab(self):
