@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHh1a3JqZ3hkaGZqYnJzY254b2R0eXNnY2VqYmZtYjV0c3J6c25nZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2zbskZp2j8wniE/giphy.gif" width="400"/>
+  <img src="https://i.giphy.com/media/l3q2zbskZp2j8wniE/giphy.gif" width="400"/>
 </div>
 
 # N78 점심 메뉴 선택기: 결정장애 종결자
