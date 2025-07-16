@@ -42,6 +42,8 @@ class LunchPickerApp(customtkinter.CTk):
 
         # Initialize database
         self.db = MenuDB()
+        # Track the last selected menu name for UI updates
+        self.last_selected_name: str | None = None
 
         # Configure window
         self.title("점심 식당 선택")
@@ -117,12 +119,14 @@ class LunchPickerApp(customtkinter.CTk):
         self._update_ui_for_state('idle')
 
     def _on_tab_change(self, tab_name=None):
-        # Stop any running animation when changing tabs
+        # This method is called when the tab is changed.
+        current_tab = self.tab_view.get()
+
+        # Stop any running animation when changing tabs to prevent resource leaks
         if self.stats_animation and self.stats_animation.event_source:
             self.stats_animation.event_source.stop()
             self.stats_animation = None
 
-        current_tab = self.tab_view.get()
         if current_tab == "  통계  ":
             self.update_stats_graph()
         elif current_tab == "  선택 기록  ":
@@ -511,7 +515,7 @@ class LunchPickerApp(customtkinter.CTk):
         )
         self.history_list.pack(padx=20, pady=10, fill="both", expand=True)
 
-    def load_menu_items(self):
+    def load_menu_items(self, last_selected_name: str | None = None):
         # Clear existing widgets
         for widget in self.exclusion_list_frame.winfo_children():
             widget.destroy()
@@ -519,6 +523,17 @@ class LunchPickerApp(customtkinter.CTk):
         
         # Load from database
         items = self.db.get_menu_items()
+        if not items:
+            no_items_label = customtkinter.CTkLabel(
+                self.exclusion_list_frame,
+                text="등록된 식당이 없습니다. 설정 탭에서 추가해주세요.",
+                font=customtkinter.CTkFont(size=14, family="Malgun Gothic"),
+                text_color="#95a5a6"
+            )
+            no_items_label.pack(pady=20)
+            self.auto_exclude_label.pack_forget() # Ensure label is hidden
+            return
+
         for item_id, name, is_excluded in items:
             item_frame = customtkinter.CTkFrame(self.exclusion_list_frame, fg_color="transparent", height=50)
             item_frame.pack(fill="x", padx=5, pady=6)
@@ -528,7 +543,7 @@ class LunchPickerApp(customtkinter.CTk):
                 item_frame, 
                 text="", 
                 variable=var,
-                command=lambda id=item_id, v=var: self.db.update_exclusion(id, v.get()),
+                command=lambda id=item_id, v=var: self._toggle_exclusion(id, v),
                 font=customtkinter.CTkFont(size=16, family="Malgun Gothic"),
                 corner_radius=6,
                 height=30,
@@ -548,31 +563,41 @@ class LunchPickerApp(customtkinter.CTk):
             
             self.menu_widgets[item_id] = (name, var, checkbox)
 
-        self._apply_auto_exclusion()
+        # --- Update Auto-Exclusion Label --- 
+        # Prioritize the name passed directly after selection, otherwise query DB.
+        # Determine the name to display: prefer parameter, then stored attribute, then DB
+        if last_selected_name is not None:
+            name_to_display = last_selected_name
+        elif self.last_selected_name is not None:
+            name_to_display = self.last_selected_name
+        else:
+            name_to_display = self.db.get_last_selected_menu()
+        # Persist the last selected name for future UI refreshes
+        self.last_selected_name = name_to_display
+
+        if name_to_display:
+            self.auto_exclude_label.configure(text=f"최근 선택: {name_to_display} (자동 제외)")
+            # Show label above list
+            self.auto_exclude_label.pack(pady=(0, 5), padx=20, fill="x")
+            # Re-pack the list frame to ensure it stays below the label
+            self.exclusion_list_frame.pack_forget()
+            self.exclusion_list_frame.pack(padx=20, pady=5, fill="both", expand=True)
+        else:
+            self.auto_exclude_label.pack_forget()
 
         # Ensure the scrollable frame is scrolled to the top after loading
         self.exclusion_list_frame._parent_canvas.yview_moveto(0)
 
     def _apply_auto_exclusion(self):
-        last_selected = self.db.get_last_selected_menu()
-        if last_selected:
-            # Find the ID of the last selected menu to update its exclusion status in the DB
-            all_items = self.db.get_menu_items()
-            item_id_to_exclude = None
-            for item_id, name, _ in all_items:
-                if name == last_selected:
-                    item_id_to_exclude = item_id
+        """Automatically exclude the last selected menu item in the database."""
+        last_name = self.db.get_last_selected_menu()
+        if last_name:
+            for item_id, name, _ in self.db.get_menu_items():
+                if name == last_name:
+                    self.db.update_exclusion(item_id, True)
                     break
-            
-            if item_id_to_exclude:
-                self.db.update_exclusion(item_id_to_exclude, True)
 
-            # Update and show the label
-            self.auto_exclude_label.configure(text=f"최근 선택: {last_selected} (자동 제외)")
-            self.auto_exclude_label.pack(pady=(0, 5), padx=20, fill="x")
-        else:
-            # Hide the label if nothing was selected previously
-            self.auto_exclude_label.pack_forget()
+
 
     def load_history(self):
         # Clear existing history
@@ -611,15 +636,24 @@ class LunchPickerApp(customtkinter.CTk):
         item = self.entry.get().strip()
         if item:
             # Add to database
-            item_id = self.db.add_menu_item(item)
-            if item_id:
-                self.entry.delete(0, "end")
-                self.load_menu_items()
+            self.db.add_menu_item(item)
+
+            # Clear the entry field and reload menu items, preserving the last selection
+            self.entry.delete(0, "end")
+            current_last_selected = self.last_selected_name
+            self.load_menu_items(last_selected_name=current_last_selected)
+
+    def delete_menu_item(self, item_id):
+        self.db.delete_menu_item(item_id)
+        # Preserve the last selection state when reloading the list
+        current_last_selected = self.last_selected_name
+        self.load_menu_items(last_selected_name=current_last_selected)
 
     def delete_history_item(self, record_id):
         self.db.delete_history(record_id)
         self.load_history()
 
+# ... (rest of the code remains the same)
 
 
     def _run_countdown_logic(self):
@@ -671,32 +705,37 @@ class LunchPickerApp(customtkinter.CTk):
 
         selected_item_id, selected_name = random.choice(available_items)
 
-        # --- Data-centric update ---
+        # --- Step 1: Update Database ---
         self.db.record_selection(selected_item_id)
-        # After selection, the only excluded item should be the one just chosen.
         self.db.reset_all_exclusions()
         self.db.update_exclusion(selected_item_id, True)
-        self.load_menu_items() # Reloads UI from DB to show the new auto-exclusion
 
-        # --- UI Finalization ---
-        self.countdown_label.pack_forget() # Hide the idle/countdown label
+        # --- Step 2: Critical UI Update (with forced rendering) ---
+        # Pass the result directly to avoid DB race conditions on first selection.
+        self.load_menu_items(last_selected_name=selected_name)
+        self.update_idletasks()
 
-        # Place the styled result labels using grid
+        # --- Step 3: Update other UI components ---
+        self.load_history()
+        if self.tab_view.get() == "통계":
+            self.update_stats_graph()
+
+        # --- Step 4: Display the final result ---
+        self.countdown_label.pack_forget()
         self.result_label.configure(text=selected_name)
         self.result_title_label.grid(row=0, column=0, sticky="s", pady=(0, 2))
         self.result_label.grid(row=1, column=0, sticky="n", pady=(2, 0))
 
-        # Update history and stats tabs in the background
-        self.load_history()
-        if self.tab_view.get() == "통계": # Only update graph if visible
-            self.update_stats_graph()
-
+        # --- Step 5: Set final app state ---
         self._update_ui_for_state('result')
 
     def _toggle_exclusion(self, item_id, var):
         # This function is now the single source of truth for manual exclusion changes.
         is_excluded = var.get()
         self.db.update_exclusion(item_id, is_excluded)
+        # Preserve the last selection state when reloading the list
+        current_last_selected = self.last_selected_name
+        self.load_menu_items(last_selected_name=current_last_selected)
         # After any manual change, we should re-evaluate the auto-exclusion label
         self._apply_auto_exclusion()
 
