@@ -335,7 +335,9 @@ class LunchPickerApp(customtkinter.CTk):
         stats = self.db.get_selection_stats()
 
         if not stats:
-            self.stats_ax.text(0.5, 0.5, "선택 기록이 없습니다.", ha='center', va='center', fontsize=18, color=COLOR_SECONDARY)
+            # Reset axes to full canvas for proper centering when empty
+            self.stats_ax.set_position([0, 0, 1, 1])
+            self.stats_ax.text(0.5, 0.5, "선택 기록이 없습니다.", ha='center', va='center', fontsize=18, color=COLOR_SECONDARY, transform=self.stats_ax.transAxes)
             self.stats_ax.set_xticks([]); self.stats_ax.set_yticks([])
             self.stats_ax.spines['right'].set_visible(False); self.stats_ax.spines['top'].set_visible(False)
             self.stats_ax.spines['left'].set_visible(False); self.stats_ax.spines['bottom'].set_visible(False)
