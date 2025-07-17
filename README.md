@@ -4,13 +4,14 @@
 
 # N78 식사 메뉴 선택기: 결정장애 종결자
 
-> "오늘 뭐 먹지?" 
-> 
-> 인류의 가장 오래되고 심오한 질문. 
-> 이 질문 앞에서 고뇌하는 당신의 팀을 위해, 신의 계시와도 같은 점심 선택기가 강림했습니다.
-> 더 이상 동료의 눈치를 보며 "아무거나"를 외치지 마세요. 이제 당신의 점심은 운명, 아니 알고리즘에 맡기십시오.
+> "오늘 점심 뭐 먹지?"
+> "늘 고민만 가득하다면, 클릭 한 번으로 해결하세요."
 
-## 🚀 핵심 철학
+한 번의 클릭으로 점심 고민을 종식시키는 혁신적인 선택기.  
+공정하고 빠른 알고리즘이 마치 점심의 운명을 예언하듯,  
+당신의 한 끼를 완벽하게 추천해드립니다.
+
+## 핵심 철학
 
 - **공정함**: 모든 메뉴는 평등한 기회를 갖습니다. (단, 어제 선택된 메뉴는 제외)
 - **투명함**: 화려한 룰렛이 돌아가는 동안, 당신의 마음도 함께 돌아갑니다.
@@ -57,10 +58,12 @@
 
 # N78 Meal Menu Picker: The Cure for Decision Paralysis
 
-> “What should I eat today?”
-> The oldest, most profound question in humanity.
-> To spare your team from this agony, behold the Meal Menu Picker—like a divine revelation for indecisive minds.
-> No more sheepishly mumbling “Anything”—entrust your meals to destiny… or rather, to our algorithm.
+> "What’s for lunch today?"
+> "Tired of endless indecision? One click fixes it all."
+
+An innovative picker that ends mealtime woes in a single click.  
+Our fair and lightning-fast algorithm feels like a prophecy,  
+delivering your next meal with pinpoint precision.
 
 ## 🚀 Core Philosophy
 
