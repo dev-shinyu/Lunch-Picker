@@ -875,9 +875,9 @@ class LunchPickerApp(customtkinter.CTk):
 
         # --- Step 4: Display the final result ---
         self.countdown_label.pack_forget()
-        self.result_title_label.pack(pady=(40,2))
+        self.result_title_label.pack(pady=(20,2))
         self.result_label.configure(text=selected_name)
-        self.result_label.pack(expand=True)
+        self.result_label.pack(pady=(0,20))
 
         # --- Step 5: Set final app state ---
         self._update_ui_for_state('result')
