@@ -95,13 +95,10 @@ This app was born to rescue your team from the quagmire of lunchtime debates. Us
 ---
 
 ## ☕ 커피 한 잔 어때요?
-이 점심 선택기가 유용하셨다면, 작은 후원으로 개발자에게 동기부여를 전할 수 있습니다. 다음 점심 시간을 고민하는 시간을 아낀 만큼, 새로운 기능 개발에 더 많은 시간을 투자할 수 있게되어 감사합니다.
-
-[![커피 사주세요](https://img.buymeacoffee.com/button-api/?text=커피%20사주세요&emoji=☕&slug=shinyu&button_colour=5F7FFF&font_colour=ffffff&font_family=Comic&outline_colour=000000&coffee_colour=FFDD00)](https://www.buymeacoffee.com/shinyu)
-
----
-
 ## ☕ Buy Me a Coffee?
+이 점심 선택기가 유용하셨다면, 작은 후원으로 개발자에게 동기부여를 전할 수 있습니다. 다음 점심 시간을 고민하는 시간을 아낀 만큼, 새로운 기능 개발에 더 많은 시간을 투자할 수 있게되어 감사합니다.
 If you've found this lunch picker helpful, consider supporting the developer with a small contribution. Your generosity allows me to invest more time in developing new features - just as this tool saves you time on daily lunch decisions.
 
 [![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=shinyu&button_colour=5F7FFF&font_colour=ffffff&font_family=Comic&outline_colour=000000&coffee_colour=FFDD00)](https://www.buymeacoffee.com/shinyu)
+
+---
