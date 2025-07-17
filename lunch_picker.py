@@ -335,7 +335,7 @@ class LunchPickerApp(customtkinter.CTk):
         # Selection title
         self.selection_title = customtkinter.CTkLabel(
             right_panel,
-            text="점심 선택",
+            text=TEXTS[self.lang]['selection_title'].format(meal=MEAL_LABELS[self.lang][self.meal]),
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SECONDARY
         )
@@ -347,7 +347,7 @@ class LunchPickerApp(customtkinter.CTk):
 
         self.duration_label = customtkinter.CTkLabel(
             duration_frame, 
-            text="카운트다운 시간(초):", 
+            text=TEXTS[self.lang]['duration_label'], 
             font=customtkinter.CTkFont(size=14, family="Malgun Gothic")
         )
         self.duration_label.pack(side="left")
@@ -364,14 +364,14 @@ class LunchPickerApp(customtkinter.CTk):
             button_color=COLOR_SECONDARY
         )
         self.duration_menu.pack(side="right")
-        
+
         # Start button
         button_frame = customtkinter.CTkFrame(right_panel, fg_color="transparent")
         button_frame.pack(pady=(0, 20), padx=20, fill="x")
 
         self.start_button = customtkinter.CTkButton(
             button_frame, 
-            text="메뉴 추천 시작!", 
+            text=TEXTS[self.lang]['start_button'], 
             command=self._run_countdown_logic,
             fg_color=COLOR_SUCCESS,
             hover_color="#27AE60",
@@ -384,7 +384,7 @@ class LunchPickerApp(customtkinter.CTk):
 
         self.restart_button = customtkinter.CTkButton(
             button_frame, 
-            text="추첨 재시작", 
+            text=TEXTS[self.lang]['restart_button'], 
             command=self.reset_selection,
             fg_color=COLOR_PRIMARY,
             hover_color="#3A7BCC",
@@ -392,18 +392,18 @@ class LunchPickerApp(customtkinter.CTk):
             font=customtkinter.CTkFont(size=18, weight="bold", family="Malgun Gothic")
         )
         # The restart button is not packed initially
-        
+
         # Result display
         self.result_frame = customtkinter.CTkFrame(
-            right_panel, 
-            fg_color=COLOR_BG_LIGHT, 
+            right_panel,
+            fg_color=COLOR_BG_LIGHT,
             corner_radius=15
         )
         self.result_frame.pack(pady=0, padx=20, fill="both", expand=True)
         self.result_frame.grid_columnconfigure(0, weight=1)
         self.result_frame.grid_rowconfigure(0, weight=1)
         self.result_frame.grid_rowconfigure(1, weight=1)
-        
+
         self.countdown_label = customtkinter.CTkLabel(
             self.result_frame,
             text="",
@@ -415,10 +415,11 @@ class LunchPickerApp(customtkinter.CTk):
         # Labels for the final result (initially hidden)
         self.result_title_label = customtkinter.CTkLabel(
             self.result_frame,
-            text="오늘의 선택은",
+            text=TEXTS[self.lang]['result_title'],
             font=customtkinter.CTkFont(size=16, family="Malgun Gothic"),
-            text_color="#95a5a6"  # A soft gray color
+            text_color="#95a5a6"
         )
+        # Hidden until result state
 
         self.result_label = customtkinter.CTkLabel(
             self.result_frame,
@@ -426,14 +427,14 @@ class LunchPickerApp(customtkinter.CTk):
             font=customtkinter.CTkFont(size=36, weight="bold", family="Malgun Gothic"),
             text_color=COLOR_SUCCESS
         )
+        # Hidden until result state
 
     def _setup_stats_tab(self):
         stats_frame = customtkinter.CTkFrame(self.stats_tab, fg_color="transparent")
         stats_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
+        # Initialize statistics canvas
         self.stats_fig = plt.figure(figsize=(8, 6), dpi=100, facecolor=COLOR_BG_LIGHT)
         self.stats_ax = self.stats_fig.add_subplot(111, facecolor=COLOR_BG_LIGHT)
-        
         self.stats_canvas = FigureCanvasTkAgg(self.stats_fig, master=stats_frame)
         self.stats_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
@@ -874,9 +875,9 @@ class LunchPickerApp(customtkinter.CTk):
 
         # --- Step 4: Display the final result ---
         self.countdown_label.pack_forget()
+        self.result_title_label.pack(pady=(40,2))
         self.result_label.configure(text=selected_name)
-        self.result_title_label.grid(row=0, column=0, sticky="s", pady=(0, 2))
-        self.result_label.grid(row=1, column=0, sticky="n", pady=(2, 0))
+        self.result_label.pack(expand=True)
 
         # --- Step 5: Set final app state ---
         self._update_ui_for_state('result')
@@ -902,8 +903,8 @@ class LunchPickerApp(customtkinter.CTk):
         # ------------------------------
 
         # Hide result labels and show the idle label
-        self.result_title_label.grid_forget()
-        self.result_label.grid_forget()
+        self.result_title_label.pack_forget()
+        self.result_label.pack_forget()
         self.countdown_label.pack(expand=True)
 
         self._update_ui_for_state('idle')
@@ -911,12 +912,15 @@ class LunchPickerApp(customtkinter.CTk):
     def _update_ui_for_state(self, state: str):
         """Centralized UI state management."""
         if state == 'idle':
+            # Hide result labels
+            self.result_title_label.pack_forget()
+            self.result_label.pack_forget()
             # Show start, hide restart
             self.restart_button.pack_forget()
             self.start_button.pack(fill="x")
             
             self.countdown_label.configure(
-                text="오늘 점심은 무엇을 먹을까요?",
+                text=TEXTS[self.lang]['idle_label'].format(meal=MEAL_LABELS[self.lang][self.meal]),
                 font=customtkinter.CTkFont(size=22, weight="bold", family="Malgun Gothic"),
                 text_color=COLOR_SECONDARY
             )
@@ -957,53 +961,29 @@ class LunchPickerApp(customtkinter.CTk):
 
 
     def _on_language_change(self, choice):
-        # Change language and update UI
+        """Handle language toggle: hide content, rebuild UI, refresh texts smoothly."""
+        # Hide the entire content area
+        self.content_frame.pack_forget()
         self.lang = 'ko' if choice == '한글' else 'en'
-        # Rebuild tabs and content for new language
         self._rebuild_tabview()
-        # Refresh all UI texts including header and content
         self._refresh_ui_texts()
+        # Show updated content
+        self.content_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
     def _on_meal_change(self, choice):
-        # Change meal type and refresh UI texts
+        """Handle meal toggle: hide content, rebuild UI, refresh texts smoothly."""
+        # Hide the entire content area
+        self.content_frame.pack_forget()
         for key, label in MEAL_LABELS[self.lang].items():
             if label == choice:
                 self.meal = key
                 break
-        # Rebuild tabs and content for new meal type
         self._rebuild_tabview()
-        # Refresh all UI texts including header and content
         self._refresh_ui_texts()
+        # Show updated content
+        self.content_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
-    def _refresh_ui_texts(self):
-        # Update header texts
-        self.title_label.configure(text=f"{TEXTS[self.lang]['title']} ({self.today})")
-        self.subtitle_label.configure(text=TEXTS[self.lang]['subtitle'])
-        # Update tab labels
-        btns = list(self.tab_view._segmented_button._buttons.values())
-        keys = ['tab_menu','tab_history','tab_stats','tab_settings']
-        for btn, key in zip(btns, keys):
-            btn.configure(text=TEXTS[self.lang][key])
-        # Update input section
-        self.input_title.configure(text=TEXTS[self.lang]['add_label'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.entry.configure(placeholder_text=TEXTS[self.lang]['entry_placeholder'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.add_button.configure(text=TEXTS[self.lang]['add_button'])
-        # Menu list section
-        self.exclusion_title.configure(text=TEXTS[self.lang]['menu_list'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.exclusion_subtitle.configure(text=TEXTS[self.lang]['menu_list_subtitle'])
-        # Selection section
-        self.selection_title.configure(text=TEXTS[self.lang]['selection_title'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.duration_label.configure(text=TEXTS[self.lang]['duration_label'])
-        self.start_button.configure(text=TEXTS[self.lang]['start_button'])
-        self.restart_button.configure(text=TEXTS[self.lang]['restart_button'])
-        self.countdown_label.configure(text=TEXTS[self.lang]['idle_label'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.result_title_label.configure(text=TEXTS[self.lang]['result_title'])
-        # History section
-        self.history_title.configure(text=TEXTS[self.lang]['history_title'])
-        # Settings section
-        self.settings_title.configure(text=TEXTS[self.lang]['settings_title'])
-        self.company_name_entry.configure(placeholder_text=TEXTS[self.lang]['settings_placeholder'])
-        self.save_button.configure(text=TEXTS[self.lang]['save_button'])
+
 
     def _rebuild_tabview(self):
         # Rebuild tabview with the new language labels
@@ -1052,31 +1032,7 @@ class LunchPickerApp(customtkinter.CTk):
         # Update header texts
         self.title_label.configure(text=f"{TEXTS[self.lang]['title']} ({self.today})")
         self.subtitle_label.configure(text=TEXTS[self.lang]['subtitle'])
-        # Update tab labels
-        btns = list(self.tab_view._segmented_button._buttons.values())
-        keys = ['tab_menu','tab_history','tab_stats','tab_settings']
-        for btn, key in zip(btns, keys):
-            btn.configure(text=TEXTS[self.lang][key])
-        # Update input section
-        self.input_title.configure(text=TEXTS[self.lang]['add_label'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.entry.configure(placeholder_text=TEXTS[self.lang]['entry_placeholder'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.add_button.configure(text=TEXTS[self.lang]['add_button'])
-        # Update menu list section
-        self.exclusion_title.configure(text=TEXTS[self.lang]['menu_list'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.exclusion_subtitle.configure(text=TEXTS[self.lang]['menu_list_subtitle'])
-        # Update selection section
-        self.selection_title.configure(text=TEXTS[self.lang]['selection_title'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.duration_label.configure(text=TEXTS[self.lang]['duration_label'])
-        self.start_button.configure(text=TEXTS[self.lang]['start_button'])
-        self.restart_button.configure(text=TEXTS[self.lang]['restart_button'])
-        self.countdown_label.configure(text=TEXTS[self.lang]['idle_label'].format(meal=MEAL_LABELS[self.lang][self.meal]))
-        self.result_title_label.configure(text=TEXTS[self.lang]['result_title'])
-        # Update history section
-        self.history_title.configure(text=TEXTS[self.lang]['history_title'])
-        # Update settings section
-        self.settings_title.configure(text=TEXTS[self.lang]['settings_title'])
-        self.company_name_entry.configure(placeholder_text=TEXTS[self.lang]['settings_placeholder'])
-        self.save_button.configure(text=TEXTS[self.lang]['save_button'])
+
 
     def _refresh_ui_texts(self):
         # Determine date string by language

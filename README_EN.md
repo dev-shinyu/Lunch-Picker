@@ -23,6 +23,8 @@
 - **Add/Remove Options**: Add new delights to the list or banish those you don’t crave with a single click. Your fingertip holds their fate.
 - **Custom Countdown**: Impatient? Go for a 3-second sprint. Craving drama? Stretch it to 15 seconds. Pick the thrill level.
 
+- **Meal-specific pastel color theme**: Enhance UI clarity by applying pastel yellow for breakfast, pastel green for lunch, and pastel blue for dinner to tabs and history badges.
+
 ## 💻 Download (Windows)
 
 [**Download the Latest Release**](https://github.com/dev-shinyu/Lunch-Picker/releases)
