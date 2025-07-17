@@ -2,7 +2,7 @@
   <img src="./images/lunch.gif" width="400"/>
 </div>
 
-# N78 식사 메뉴 선택기: 결정장애 종결자 (Meal Menu Picker: The Cure for Decision Paralysis)
+# 식사 메뉴 선택기: 결정장애 종결자 [Meal Menu Picker: The Cure for Decision Paralysis]
 
 > "오늘 점심 뭐 먹지?"
 > "What's for lunch today?"
@@ -19,7 +19,7 @@ Our fair and lightning-fast algorithm feels like a prophecy,
 당신의 한 끼를 완벽하게 추천해드립니다.  
 delivering your next meal with pinpoint precision.
 
-## 🚀 핵심 철학 (Core Philosophy)
+## 🚀 핵심 철학 [Core Philosophy]
 
 - **공정함**: 모든 메뉴는 평등한 기회를 갖습니다. (단, 어제 선택된 메뉴는 제외)
 - **Fairness**: Every option gets an equal chance. (Hint: Yesterday's pick is automatically excluded.)
@@ -30,7 +30,7 @@ delivering your next meal with pinpoint precision.
 - **신속함**: 3초, 5초, 10초... 당신의 배고픔 속도에 맞춰 운명의 시간을 조절하세요.
 - **Speed**: From a quick 3-second dash to a suspenseful 15-second countdown—choose the tempo that matches your hunger.
 
-## ✨ 주요 기능 (이라 쓰고 마법이라 읽는다) (Key Features (Magic in Disguise))
+## ✨ 주요 기능 (이라 쓰고 마법이라 읽는다) [Key Features (Magic in Disguise)]
 
 - **운명의 룰렛**: 그냥 랜덤이 아닙니다. 최첨단 `random.choice` 기술을 탑재하여, 당신의 메뉴를 한 치의 오차 없이 '찍어' 드립니다.
 - **Fate's Roulette**: Not just random—powered by cutting-edge `random.choice` to pinpoint your next meal with algorithmic precision.
@@ -50,34 +50,28 @@ delivering your next meal with pinpoint precision.
 - **식사별 파스텔 색상 테마**: 아침은 연한 노란색, 점심은 연한 초록색, 저녁은 연한 파란색으로 탭과 기록 배지를 구분하여 직관적인 UI를 제공합니다.
 - **Meal-specific pastel color theme**: Enhance UI clarity by applying pastel yellow for breakfast, pastel green for lunch, and pastel blue for dinner to tabs and history badges.
 
-## 💻 다운로드 (Download) (Windows)
+## 💻 다운로드 [Download] (Windows)
 
-[**최신 버전 다운로드 (Download the Latest Releas)**](https://github.com/dev-shinyu/Lunch-Picker/releases)
+[**최신 버전 다운로드 [Download the Latest Releas]**](https://github.com/dev-shinyu/Lunch-Picker/releases)
 
 위 링크를 클릭하여 'Releases' 페이지로 이동한 후, 최신 버전의 `lunch_picker.exe` 파일을 받아 실행하세요.
 Click the link to visit the Releases page and grab the newest `lunch_picker.exe`, then fire it up.
 
-## 👨‍💻 사용법 (How to Use)
+## 👨‍💻 사용법 [How to Use]
 
-1. 앱을 켠다.
-1. Launch the app.
+1. 앱을 켠다. Launch the app.
 
-2. 원하는 언어와 식사 유형(아침/점심/저녁)을 선택한다.
-2. Select your preferred language and meal type (Breakfast/Lunch/Dinner).
+2. 원하는 언어와 식사 유형(아침/점심/저녁)을 선택한다. Select your preferred language and meal type (Breakfast/Lunch/Dinner).
 
-3. '메뉴 추천 시작!' 버튼을 누른다. (마음속으로 원하는 메뉴를 외치면 확률이 올라간다는 미신이 있습니다.)
-3. Click **"Start Menu Recommendation!"** (Legend says chanting your desired dish boosts its odds.)
+3. '메뉴 추천 시작!' 버튼을 누른다. (마음속으로 원하는 메뉴를 외치면 확률이 올라간다는 미신이 있습니다.) Click **"Start Menu Recommendation!"** (Legend says chanting your desired dish boosts its odds.)
 
-4. 결과에 순응한다.
-4. Embrace the outcome.
+4. 결과에 순응한다. Embrace the outcome.
 
-5. 맛있게 먹는다.
-5. Enjoy your meal.
+5. 맛있게 먹는다. Enjoy your meal.
 
-6. (선택사항) '추첨 재시작' 버튼을 눌러 운명에 저항해본다.
-6. (Optional) Click **"Restart Recommendation"** to tempt fate again.
+6. (선택사항) '추첨 재시작' 버튼을 눌러 운명에 저항해본다. (Optional) Click **"Restart Recommendation"** to tempt fate again.
 
-## 💬 개발자의 한마디 (Developer's Note)
+## 💬 개발자의 한마디 [Developer's Note]
 
 이 앱은 당신의 팀을 점심 메뉴 분쟁의 늪에서 구원하기 위해 개발되었습니다. 이 앱으로 아낀 시간과 감정으로 더 중요한 일에 집중하세요. 예를 들면... 오후 업무라든가...
 This app was born to rescue your team from the quagmire of lunchtime debates. Use the time and emotions you save to focus on more important tasks—like that afternoon project.
@@ -87,7 +81,7 @@ This app was born to rescue your team from the quagmire of lunchtime debates. Us
 
 ---
 
-## ☕ 커피 한 잔 어때요? (Buy Me a Coffee?)
+## ☕ 커피 한 잔 어때요? [Buy Me a Coffee?]
 이 점심 선택기가 유용하셨다면, 작은 후원으로 개발자에게 동기부여를 전할 수 있습니다. 다음 점심 시간을 고민하는 시간을 아낀 만큼, 새로운 기능 개발에 더 많은 시간을 투자할 수 있게되어 감사합니다.
 If you've found this lunch picker helpful, consider supporting the developer with a small contribution. Your generosity allows me to invest more time in developing new features - just as this tool saves you time on daily lunch decisions.
 
